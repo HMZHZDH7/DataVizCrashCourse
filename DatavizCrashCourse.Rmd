@@ -1,0 +1,122 @@
+---
+title: "DataViz crash course"
+author: "HZ"
+date: '2023-05-15'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+
+#This is the ggplot package to make visualizations
+library(ggplot2)
+
+#These are the essential packages which allow for formatting and easily manipulating data in R. Also, they are requirements of ggplot
+library(tidyverse)
+library(tidymodels)
+library(dplyr)
+
+#Contains the skimming function
+library(skimr)
+
+```
+
+
+```{r load data}
+#This loads data from the csv into R.
+questionnaire <- as_tibble(read.csv(file.path("./","questionnaire.csv"), fileEncoding="UTF-8-BOM"))
+```
+
+```{r skim}
+#Skimming function to show the overview of data
+#select(-Participant, -Level) means that the skim function will exclude the columns which have a -
+questionnaire %>%
+  select(-Participant, -Level) %>%
+  skim()
+
+#You can instead use the select function to specify which columns you want to analyse specifically
+questionnaire %>%
+  select(AgencyNew, Ownership) %>%
+  skim()
+
+#The select function is not particular to skim(). You can use it on any R function.
+questionnaire %>%
+  select(AgencyNew, Ownership) %>%
+  count()
+
+#You can also use the group_by function to break down data into categories and analyse them separately.
+#Here is an example of how I would analyse data broken down by condition
+#Notice how it prints out results for each level (Body vs. block) separately while the previous skim functions printed results on the data as a whole
+questionnaire %>%
+  group_by(Level) %>%
+  select(-Participant, -Level) %>%
+  skim()
+```
+```{r data handling}
+#You can also get create new columns that are calculated from other columns
+#Here is an example of creating a new column which is an average of two other columns
+questionnaire$AgencyAveraged <- rowMeans(questionnaire[,c('AgencyNew', 'AgencyOld')], na.rm=TRUE)
+
+#The filter function can help you isolate some data
+#Here is a data frame that only has the data from the Body condition
+questionnaireBody <- questionnaire %>% filter(Level=="Body")
+
+#Here is one where I only want participants who had above average performance
+questionnaireHighPerf <- questionnaire %>% filter(Performance>mean(Performance))
+
+```
+
+
+```{r violin}
+
+#Here is a violin plot for all participants' agency (feeling of control)
+#All ggplot function must start with the ggplot function and then you add modifictions onto it
+# +theme_bw() changes the style (this is my preferance)
+#geom_violin drawn the violin plots
+#geom_boxplot draws the boxplots
+ggplot(data = questionnaire, aes(x=Level, y=AgencyNew, color=Level)) + theme_bw()+ geom_violin() + geom_boxplot() 
+ggplot(data = questionnaire, aes(x=Level, y=Ownership, color=Level)) + theme_bw()+ geom_violin() + geom_boxplot() 
+
+#You can also move the aesthetics from the ggplot function into the geom functions
+ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) 
+
+#That gives you better control over the style. For example I can remove the colors from the violin plots but not the boxplots if I want to
+ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) 
+
+#The xlim and ylim functions allows you to control the values on the x and y axis. For example, I want the y-axis to range from 1 to 7
+#A good rule is to set the xlim and ylim equal to the scale you're using. I.e. if participants rate something on a scale of 1 to 5, xlim and ylim should be 1to 5 as well
+ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) + ylim(1, 7)
+
+#Here's some ridiculous examples
+ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) + ylim(-20, 20)
+ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) + ylim(4, 6)
+```
+
+```{r Points}
+#This draws the point plot which shows correlations
+#geom_point draws the data
+#geom_smooth draws the line
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F)
+
+#If you specify that colours=level, it will seperate the dots by colour and generate two seperate trend lines for each Level
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F)
+
+#Setting the xlim and ylim
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F) + ylim(1, 7) + xlim(1,7)
+
+#Here is how to do a correlation test
+#The r value is how strong the correlation is. (0 is weakest, -1/1 are the strongest)
+#The p-value is how statistically significant the correlation is. Anything less than 0.05 is good. Anything more than 0.05 is considered not a valid result
+cor.test(questionnaire$Ownership, questionnaire$AgencyNew)
+```
+```{r Save plot}
+#You can store a plot inside a variable (notice how the plot will not be show in Rstudio when you run this code!)
+corrplot <- ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F) + ylim(1, 7) + xlim(1,7)
+
+#Then use the ggsave function to save this plot in the project folder
+ggsave("plotname.png", corrplot,dpi=1000)
+```
+
+
