@@ -119,4 +119,19 @@ corrplot <- ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Lev
 ggsave("plotname.png", corrplot,dpi=1000)
 ```
 
+```{r ttest}
+#This line uses a t-test to compare data in ONE column broken down by another column
+#You can use this to compare conditions
+t.test(data=questionnaire, AgencyNew~Level)
+
+#You can then do something like this to compare data which is stored in DIFFERENT columns
+t.test(questionnaire$AgencyNew, questionnaire$AgencyOld)
+
+#A wilcox test works the same exact way
+wilcox.test(data=questionnaire, AgencyNew~Level)
+wilcox.test(questionnaire$AgencyNew, questionnaire$AgencyOld)
+
+
+```
+
 
