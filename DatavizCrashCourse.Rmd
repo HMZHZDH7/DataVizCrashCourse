@@ -1,10 +1,3 @@
----
-title: "DataViz crash course"
-author: "HZ"
-date: '2023-05-15'
-output: html_document
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
@@ -49,11 +42,12 @@ questionnaire %>%
 #You can also use the group_by function to break down data into categories and analyse them separately.
 #Here is an example of how I would analyse data broken down by condition
 #Notice how it prints out results for each level (Body vs. block) separately while the previous skim functions printed results on the data as a whole
-questionnaire %>%
-  group_by(Level) %>%
-  select(-Participant, -Level) %>%
+questionnaire %>% 
+  group_by(Level) %>% 
+  select(-Participant, -Level) %>% 
   skim()
 ```
+
 ```{r data handling}
 #You can also get create new columns that are calculated from other columns
 #Here is an example of creating a new column which is an average of two other columns
@@ -61,10 +55,12 @@ questionnaire$AgencyAveraged <- rowMeans(questionnaire[,c('AgencyNew', 'AgencyOl
 
 #The filter function can help you isolate some data
 #Here is a data frame that only has the data from the Body condition
-questionnaireBody <- questionnaire %>% filter(Level=="Body")
+questionnaireBody <- questionnaire %>% 
+  filter(Level=="Body")
 
 #Here is one where I only want participants who had above average performance
-questionnaireHighPerf <- questionnaire %>% filter(Performance>mean(Performance))
+questionnaireHighPerf <- questionnaire %>% 
+  filter(Performance>mean(Performance))
 
 ```
 
@@ -76,8 +72,16 @@ questionnaireHighPerf <- questionnaire %>% filter(Performance>mean(Performance))
 # +theme_bw() changes the style (this is my preferance)
 #geom_violin drawn the violin plots
 #geom_boxplot draws the boxplots
-ggplot(data = questionnaire, aes(x=Level, y=AgencyNew, color=Level)) + theme_bw()+ geom_violin() + geom_boxplot() 
-ggplot(data = questionnaire, aes(x=Level, y=Ownership, color=Level)) + theme_bw()+ geom_violin() + geom_boxplot() 
+ggplot(data = questionnaire, aes(x=Level, y=AgencyNew, color=Level)) + 
+  theme_bw() + 
+  geom_violin() + 
+  geom_boxplot(width=0.1) +
+  geom_jitter(alpha=0.1)
+
+ggplot(data = questionnaire, aes(x=Level, y=Ownership, color=Level)) + 
+  theme_bw() + 
+  geom_violin() + 
+  geom_boxplot(width=0.1) 
 
 #You can also move the aesthetics from the ggplot function into the geom functions
 ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) 
@@ -98,13 +102,19 @@ ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew,
 #This draws the point plot which shows correlations
 #geom_point draws the data
 #geom_smooth draws the line
-ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F)
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew)) + 
+  geom_jitter() + 
+  theme_bw() + 
+  geom_smooth(method = "lm",se=F)
 
 #If you specify that colours=level, it will seperate the dots by colour and generate two seperate trend lines for each Level
-ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F)
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + 
+  geom_jitter() + 
+  theme_bw() + 
+  geom_smooth(method = "lm",se=F)
 
 #Setting the xlim and ylim
-ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_point() + theme_bw() + geom_smooth(method = "lm",se=F) + ylim(1, 7) + xlim(1,7)
+ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_jitter() + theme_bw() + geom_smooth(method = "lm",se=F) + ylim(1, 7) + xlim(1,7)
 
 #Here is how to do a correlation test
 #The r value is how strong the correlation is. (0 is weakest, -1/1 are the strongest)
@@ -120,6 +130,10 @@ ggsave("plotname.png", corrplot,dpi=1000)
 ```
 
 ```{r ttest}
+shapiro.test(questionnaire$AgencyNew)
+shapiro.test(questionnaire$Ownership)
+
+
 #This line uses a t-test to compare data in ONE column broken down by another column
 #You can use this to compare conditions
 t.test(data=questionnaire, AgencyNew~Level)
