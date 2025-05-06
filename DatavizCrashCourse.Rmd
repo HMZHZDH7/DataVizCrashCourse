@@ -20,6 +20,15 @@ library(skimr)
 ```{r load data}
 #This loads data from the csv into R.
 questionnaire <- as_tibble(read.csv(file.path("./","questionnaire.csv"), fileEncoding="UTF-8-BOM"))
+
+seq_questionnaire <- as_tibble(read.csv(file.path("./","Questionnaire for Experiment L(1-10).csv"), sep=";", fileEncoding="UTF-8-BOM"))
+non_seq_questionnaire <- as_tibble(read.csv(file.path("./","Questionnaire for Experiment UL(1-10).csv"), sep=";", fileEncoding="UTF-8-BOM"))
+
+seq_questionnaire$condition <- "Sequential"
+non_seq_questionnaire$condition <- "non-Sequential"
+
+
+df_merge <- rbind(seq_questionnaire,non_seq_questionnaire)
 ```
 
 ```{r skim}
@@ -96,6 +105,14 @@ ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew,
 #Here's some ridiculous examples
 ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) + ylim(-20, 20)
 ggplot(data = questionnaire) + theme_bw()+ geom_violin(aes(x=Level, y=AgencyNew, color=Level)) + geom_boxplot(aes(x=Level, y=AgencyNew, color=Level)) + ylim(4, 6)
+
+
+ggplot(data = df_merge, aes(x=condition, y=I.enjoyed.doing.this.activity.very.much2, color=condition)) + 
+  theme_bw() + 
+  geom_violin() + 
+  geom_boxplot(width=0.1) +
+  geom_jitter(alpha=0.1)+ ylim(1, 7)
+
 ```
 
 ```{r Points}
@@ -120,6 +137,11 @@ ggplot(data = questionnaire, aes(x=Ownership, y=AgencyNew, color=Level)) + geom_
 #The r value is how strong the correlation is. (0 is weakest, -1/1 are the strongest)
 #The p-value is how statistically significant the correlation is. Anything less than 0.05 is good. Anything more than 0.05 is considered not a valid result
 cor.test(questionnaire$Ownership, questionnaire$AgencyNew)
+
+ggplot(data = df_merge, aes(x=I.enjoyed.doing.this.activity.very.much, y=I.enjoyed.doing.this.activity.very.much2, color=condition)) + 
+  geom_jitter() + 
+  theme_bw() + 
+  geom_smooth(method = "lm",se=F)
 ```
 ```{r Save plot}
 #You can store a plot inside a variable (notice how the plot will not be show in Rstudio when you run this code!)
@@ -133,19 +155,24 @@ ggsave("plotname.png", corrplot,dpi=1000)
 shapiro.test(questionnaire$AgencyNew)
 shapiro.test(questionnaire$Ownership)
 
+shapiro.test(df_merge$I.enjoyed.doing.this.activity.very.much2)
 
 #This line uses a t-test to compare data in ONE column broken down by another column
 #You can use this to compare conditions
 t.test(data=questionnaire, AgencyNew~Level)
 
 #You can then do something like this to compare data which is stored in DIFFERENT columns
-t.test(questionnaire$AgencyNew, questionnaire$AgencyOld)
+t.test(data=df_merge, I.enjoyed.doing.this.activity.very.much2~condition)
 
 #A wilcox test works the same exact way
-wilcox.test(data=questionnaire, AgencyNew~Level)
+wilcox.test(data=df_merge, I.enjoyed.doing.this.activity.very.much~condition)
+
+wilcox.test(data=df_merge, I.enjoyed.doing.this.activity.very.much2~condition)
+
+
 wilcox.test(questionnaire$AgencyNew, questionnaire$AgencyOld)
 
-
+cor.test(df_merge$I.enjoyed.doing.this.activity.very.much, df_merge$I.enjoyed.doing.this.activity.very.much2)
 ```
 
 
